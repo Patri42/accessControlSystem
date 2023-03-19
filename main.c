@@ -16,3 +16,10 @@ void remoteOpenDoor(struct SystemState* state) {
     }
     printLampStatus(0);
 }
+
+int main(){
+    printLampStatus(true);
+    printLampStatus(false);
+
+    return 0;
+}
