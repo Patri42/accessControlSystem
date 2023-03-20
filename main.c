@@ -41,8 +41,66 @@ void addRemoveAccess(struct SystemState* state){
     printf("Enter Cardnumber: ");
     fgets(cardNum, CARD_NUM_LEN, stdin);
     cardNum[strcspn(cardNum, "\n")] = '\0';
-}
 
+    for (int cardIndex = 0; cardIndex < state->numCards; cardIndex++){
+        if (strcmp(state->cards[cardIndex].number, cardNum) == 0){
+            printf("This card has %s!\n", state->cards[cardIndex].hasAccess ? "access" : "no access");
+            printf("Press 1 for access, 2 for no access.\n");
+            int choice;
+            char input [100];
+            fgets(input, sizeof(input), stdin);
+            
+            if (scanf(input, "%d", &choice) != 1){
+                printf("Invalid input. Please enter a number.\n");
+                free(cardNum); // Free memory when done using it
+                return;
+            }
+            switch (choice) { // Set card access based on user choice
+                case 1:
+                    state->cards[cardIndex].hasAccess = 1;
+                    break;
+                case 2:
+                    state->cards[cardIndex].hasAccess = 0;
+                    break;
+                default:
+                    printf("Invalid choice.\n");
+                    break;
+            }
+            free (cardNum);
+            return;
+        }
+    }
+    struct Card newCard;
+    strncpy(newCard.number, cardNum, CARD_NUM_LEN - 1);
+    newCard.number[CARD_NUM_LEN - 1] = '\0'; // Ensure null-termination
+    printf("This card has no access!\n");
+    printf("Press 1 to add access, 2 to deny access.\n");
+    int choice;
+    char input[100];
+    fgets(input, sizeof(input), stdin);
+    if (sscanf(input, "%d", &choice) != 1) {
+        printf("Invalid input. Please enter a number.\n");
+        free(cardNum);
+        return;
+    }
+    switch (choice) {
+        case 1:
+            newCard.hasAccess = 1;
+            break;
+        case 2:
+            newCard.hasAccess = 0;
+            break;
+        default:
+            printf("Invalid choice.\n");
+            free(cardNum);
+            return;
+    }
+    newCard.added = time(NULL);
+    state->numCards++;
+    state->cards = realloc(state->cards, state->numCards * sizeof(struct Card)); // Allocate more memory on the heap
+    state->cards[state->numCards - 1] = newCard; // Add the new card to the end of the array
+    free(cardNum); // Free memory when done using it
+}
 
 int main(){
     
