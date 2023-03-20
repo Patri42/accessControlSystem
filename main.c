@@ -36,6 +36,14 @@ void listAllCards(struct SystemState* state){
     }
 }
 
+void addRemoveAccess(struct SystemState* state){
+    char* cardNum = malloc (CARD_NUM_LEN*sizeof(char));
+    printf("Enter Cardnumber: ");
+    fgets(cardNum, CARD_NUM_LEN, stdin);
+    cardNum[strcspn(cardNum, "\n")] = '\0';
+}
+
+
 int main(){
     
     struct SystemState state;
