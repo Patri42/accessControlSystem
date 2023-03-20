@@ -26,7 +26,7 @@ void listAllCards(struct SystemState* state){
 
     printf("All cards in system:\n");
     for (int cardIndex = 0; cardIndex < state->numCards; cardIndex++ ){
-        printf("%s", state->cards[i].number);
+        printf("%s", state->cards[cardIndex].number);
         if (state->cards[cardIndex].hasAccess){
             printf("Access ");
         }else {
