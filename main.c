@@ -17,10 +17,40 @@ void remoteOpenDoor(struct SystemState* state) {
     printLampStatus(0);
 }
 
+void listAllCards(struct SystemState* state){
+
+    if (state ->numCards==0){
+        printf ("No cards stored.\n");
+        return;
+    }
+
+    printf("All cards in system:\n");
+    for (int cardIndex = 0; cardIndex < state->numCards; cardIndex++ ){
+        printf("%s", state->cards[i].number);
+        if (state->cards[cardIndex].hasAccess){
+            printf("Access ");
+        }else {
+            printf("No access ");
+        }
+        printf("Added to system: %s", ctime(&state->cards[cardIndex].added));
+    }
+}
+
 int main(){
     
     struct SystemState state;
     remoteOpenDoor(&state);
 
+    // Testing
+    struct Card card1 = {"12345", 1, time(0)};
+    struct Card card2 = {"67890", 0, time(0)};
+
+    state.numCards=2;
+    state.cards = (struct Card*) malloc (state.numCards* sizeof(struct Card));
+    state.cards[0]= card1;
+    state.cards[1]= card2;
+
+    listAllCards(&state);
+    free (state.cards);
     return 0;
 }
