@@ -130,29 +130,55 @@ void fakeCardScan(struct SystemState* state){
     free(cardNum);
 }
 
-int main(){
-    
+int main() {
+
     struct SystemState state;
-    remoteOpenDoor(&state);
+    state.cards = NULL;
+    state.numCards = 0;
 
-    // Testing
-    struct Card card1 = {"12345", 1, time(0)};
-    struct Card card2 = {"67890", 0, time(0)};
+    int choice;
+    do {
+        system("cls");
+        printf("Admin menu\n");
+        printf("1. Remote open door\n");
+        printf("2. List all cards in system\n");
+        printf("3. Add/remove access\n");
+        printf("4. Exit\n");
+        printf("9. FAKE TEST SCAN CARD\n");
 
-    state.numCards=2;
-    state.cards = (struct Card*) malloc (state.numCards* sizeof(struct Card));
-    state.cards[0]= card1;
-    state.cards[1]= card2;
+        char input[100];
+        fgets(input, sizeof(input), stdin);
+        if (sscanf(input, "%d", &choice) != 1) {
+            printf("Invalid input. Please enter a number.\n");
+            continue;
+        }
+        switch (choice) {
+            case 1:
+                remoteOpenDoor(&state);
+                waitForInput();
+                break;
+            case 2:
+                listAllCards(&state);
+                waitForInput();
+                break;
+            case 3:
+                addRemoveAccess(&state);
+                waitForInput();
+                break;
+            case 4:
+                printf("Goodbye!\n");
+                break;
+            case 9:
+                fakeCardScan(&state);
+                waitForInput();
+                break;
+            default:
+                printf("Invalid choice. Please enter a number between 1 and 4 or 9.\n");
+                waitForInput();
+                break;
+        }
+    } while (choice != 4);
 
-    listAllCards(&state);
-
-    char newCardNum[] = "111222";
-    int choiceForAccess = 1;
-    addNewCard (&state, newCardNum, choiceForAccess);
-
-    printf("After adding new card: ");
-    listAllCards(&state);
-
-    free (state.cards);
+    free(state.cards);
     return 0;
 }
