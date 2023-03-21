@@ -7,6 +7,7 @@
 
 #include <time.h> // Here because of Card struct
 
+
 // Define the maximum length of a card number
 #define CARD_NUM_LEN 20 
 

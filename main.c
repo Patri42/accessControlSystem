@@ -1,6 +1,20 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
+
 #include "SystemState.h"
+
+void waitForInput() {
+    printf("Press Enter to continue...");
+    getchar();
+}
 
 void printLampStatus(bool isGreen) {
     const char* color = isGreen ? ANSI_COLOR_GREEN : ANSI_COLOR_RED;
@@ -12,7 +26,12 @@ void remoteOpenDoor(struct SystemState* state) {
     // Wait for 3 seconds
     for (int i = 3; i > 0; i--) {
         printf("Door will be open for %d seconds\n", i);
-        sleep(1);
+        //sleep(1);
+        #ifdef _WIN32
+            Sleep(1000); // Sleep duration is in milliseconds for Windows
+        #else
+            sleep(1);    // Sleep duration is in seconds for POSIX systems
+        #endif
     }
     printLampStatus(0);
 }
@@ -26,7 +45,7 @@ void listAllCards(struct SystemState* state){
 
     printf("All cards in system:\n");
     for (int cardIndex = 0; cardIndex < state->numCards; cardIndex++ ){
-        printf("%s", state->cards[cardIndex].number);
+        printf("%s ", state->cards[cardIndex].number);
         if (state->cards[cardIndex].hasAccess){
             printf("Access ");
         }else {
@@ -73,11 +92,17 @@ void addNewCard(struct SystemState* state, char* cardNum, int choice) {
     state->cards[state->numCards - 1] = newCard;
 }
 
-void addRemoveAccess(struct SystemState* state) {
+char* getCardNumber() {
     char* cardNum = malloc(CARD_NUM_LEN * sizeof(char));
-    printf("Enter Cardnumber: ");
     fgets(cardNum, CARD_NUM_LEN, stdin);
     cardNum[strcspn(cardNum, "\n")] = '\0';
+    return cardNum;
+}
+
+void addRemoveAccess(struct SystemState* state) {
+    char* cardNum;
+    printf("Enter Cardnumber: ");
+    cardNum = getCardNumber();
 
     for (int cardIndex = 0; cardIndex < state->numCards; cardIndex++) {
         if (strcmp(state->cards[cardIndex].number, cardNum) == 0) {
@@ -103,13 +128,12 @@ void addRemoveAccess(struct SystemState* state) {
 
 void fakeCardScan(struct SystemState* state){
    
-    char* cardNum = malloc(CARD_NUM_LEN* sizeof(char));
+    char* cardNum;
     
     printf("Please scan card to enter or X to go back to admin menu\n");
     printLampStatus(0);
     
-    fgets(cardNum, CARD_NUM_LEN, stdin);
-    cardNum [strcspn(cardNum,"\n")] ='\0';
+    cardNum = getCardNumber();
 
     if (strcmp(cardNum, "X") == 0 || strcmp(cardNum, "x") == 0) {
         free(cardNum);
@@ -117,7 +141,7 @@ void fakeCardScan(struct SystemState* state){
     }
 
     for (int cardIndex=0; cardIndex < state->numCards; cardIndex++){
-        if (strcmp(state->cards[cardIndex].number, cardNum)){
+        if (strcmp(state->cards[cardIndex].number, cardNum)==0){
             if (state->cards[cardIndex].hasAccess)
                 printLampStatus(1);
             else
