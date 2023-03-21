@@ -101,6 +101,35 @@ void addRemoveAccess(struct SystemState* state) {
     free(cardNum);
 }
 
+void fakeCardScan(struct SystemState* state){
+   
+    char* cardNum = malloc(CARD_NUM_LEN* sizeof(char));
+    
+    printf("Please scan card to enter or X to go back to admin menu\n");
+    printLampStatus(0);
+    
+    fgets(cardNum, CARD_NUM_LEN, stdin);
+    cardNum [strcspn(cardNum,"\n")] ='\0';
+
+    if (strcmp(cardNum, "X") == 0 || strcmp(cardNum, "x") == 0) {
+        free(cardNum);
+        return;
+    }
+
+    for (int cardIndex=0; cardIndex < state->numCards; cardIndex++){
+        if (strcmp(state->cards[cardIndex].number, cardNum)){
+            if (state->cards[cardIndex].hasAccess)
+                printLampStatus(1);
+            else
+                printLampStatus(0);
+            free(cardNum);
+            return;
+        }
+    }
+    printLampStatus(0);
+    free(cardNum);
+}
+
 int main(){
     
     struct SystemState state;
