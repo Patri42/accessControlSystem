@@ -116,6 +116,14 @@ int main(){
     state.cards[1]= card2;
 
     listAllCards(&state);
+
+    char newCardNum[] = "111222";
+    int choiceForAccess = 1;
+    addNewCard (&state, newCardNum, choiceForAccess);
+
+    printf("After adding new card: ");
+    listAllCards(&state);
+
     free (state.cards);
     return 0;
 }
