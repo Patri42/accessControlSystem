@@ -40,9 +40,17 @@ void remoteOpenDoor(struct SystemState* state) {
 }
 
 void listAllCards(struct SystemState* state){
+    // Open the card data file for reading
+    FILE* fp = fopen(state->cardDataFile, "r");
+    if (fp == NULL) {
+        printf("Error: could not open file %s for reading.\n", state->cardDataFile);
+        return;
+    }
+
     // If no cards found
     if (state ->numCards==0){
         printf ("No cards stored.\n");
+        fclose(fp);
         return;
     }
 

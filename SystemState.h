@@ -22,6 +22,7 @@ struct Card {
 struct SystemState {
     struct Card* cards;
     int numCards;
+    char* cardDataFile;
 };
 
 #endif
