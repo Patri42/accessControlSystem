@@ -210,6 +210,26 @@ int main() {
     struct SystemState state;
     state.cards = NULL;
     state.numCards = 0;
+    state.cardDataFile = "cards.txt";
+
+    // Open the card data file for reading
+    FILE* fp = fopen(state.cardDataFile, "r");
+    if (fp != NULL) {
+        char line[100];
+        while (fgets(line, sizeof(line), fp) != NULL) {
+            char number[CARD_NUM_LEN];
+            int hasAccess;
+            time_t added;
+            if (sscanf(line, "%s %d %ld", number, &hasAccess, &added) != 3) {
+                printf("Error: invalid line in card data file.\n");
+                fclose(fp);
+                free(state.cards);
+                return 1;
+            }
+            addNewCard(&state, number, hasAccess ? 1 : 2);
+        }
+        fclose(fp);
+    }
 
     int choice;
 
