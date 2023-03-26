@@ -50,21 +50,32 @@ void listAllCards(struct SystemState* state){
     // If no cards found
     if (state ->numCards==0){
         printf ("No cards stored.\n");
+        // Close the file
         fclose(fp);
         return;
     }
 
     printf("All cards in system:\n");
-    for (int cardIndex = 0; cardIndex < state->numCards; cardIndex++ ){
-        printf("%s ", state->cards[cardIndex].number);
-        if (state->cards[cardIndex].hasAccess){
+    // Read the card data from the file and print it to the console
+    char line [100];
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        char number[CARD_NUM_LEN];
+        int hasAccess;
+        time_t added;
+        if (sscanf(line, "%s %d %ld", number, &hasAccess, &added) != 3) {
+            printf("Error: invalid line in card data file.\n");
+            fclose(fp);
+            return;
+        }
+        printf("%s ", number);
+        if (hasAccess) {
             printf("Access ");
-        }else {
+        } else {
             printf("No access ");
         }
-        // Time added to the card
-        printf("Added to system: %s", ctime(&state->cards[cardIndex].added));
+        printf("Added to system: %s", ctime(&added));
     }
+    fclose(fp);
 }
 
 int getChoice() {
