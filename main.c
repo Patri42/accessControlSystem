@@ -231,9 +231,8 @@ int main() {
         fclose(fp);
     }
 
-    int choice;
-
     // Main loop of the program
+    int choice;
     do {
         system("cls");
         printf("Admin menu\n");
