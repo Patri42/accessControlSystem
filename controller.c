@@ -128,7 +128,7 @@ int getChoice() {
     }
     return choice;
 }
-
+// Updates the access level of a card in the system state.
 void updateCardAccess(struct SystemState* state, int cardIndex, int choice) {
     state->cards[cardIndex].hasAccess = choice;
 }
@@ -255,11 +255,12 @@ int getUserChoice() {
     fgets(input, sizeof(input), stdin);
     if (sscanf(input, "%d", &choice) != 1) {
         printf("Invalid input. Please enter a number.\n");
-        return -1; // Make sure to define INVALID_CHOICE as a constant (-1, for example)
+        return -1; 
     }
     return choice;
 }
 
+// Handles the user's menu choice and calls the corresponding function.
 void processUserChoice(int choice, struct SystemState* state) {
     switch (choice) {
         case 1:
