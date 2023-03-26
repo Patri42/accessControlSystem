@@ -11,11 +11,18 @@ Usage
 The program provides the following commands:
 
 1 - Add a new card to the system
+
 2 - Remove an existing card from the system
+
 3 - Update the access permissions of an existing card
+
 4 - View a list of all cards and their access permissions
+
 5 - Exit the program
+
 9 - Fake Card Scan
 
+
 Authors
+
 Patrick Borzych
