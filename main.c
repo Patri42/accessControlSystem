@@ -104,12 +104,33 @@ void addNewCard(struct SystemState* state, char* cardNum, int choice) {
     newCard.hasAccess = choice == 1 ? 1 : 0;
     newCard.added = time(NULL);
 
+    // Open the card data file for appending
+    FILE* fp = fopen(state->cardDataFile, "a");
+    if (fp == NULL) {
+        printf("Error: could not open file %s for writing.\n", state->cardDataFile);
+        return;
+    }
+
+    // Write the new card data to the file
+    fprintf(fp, "%s %d %ld\n", newCard.number, newCard.hasAccess, newCard.added);
+
+    // Close the file
+    fclose(fp);
+
     // Increase the number of cards in the system and resize the cards array
     state->numCards++;
-    state->cards = realloc(state->cards, state->numCards * sizeof(struct Card));
+    // Allocate memory for the new cards array
+    struct Card* newCards = malloc(state->numCards * sizeof(struct Card));
 
-    // Add the new card to the end of the cards array
-    state->cards[state->numCards - 1] = newCard;
+    // Copy the existing cards to the new array
+    memcpy(newCards, state->cards, (state->numCards - 1) * sizeof(struct Card));
+
+    // Add the new card to the end of the new cards array
+    newCards[state->numCards - 1] = newCard;
+
+    // Free the old cards array and update the state
+    free(state->cards);
+    state->cards = newCards;
 }
 
 char* getCardNumber() {
