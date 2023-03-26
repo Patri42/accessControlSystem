@@ -93,20 +93,7 @@ int getChoice() {
 }
 
 void updateCardAccess(struct SystemState* state, int cardIndex, int choice) {
-    switch (choice) {
-        case 1:
-            // Grant access to the card
-            state->cards[cardIndex].hasAccess = 1;
-            break;
-        case 2:
-            // Remove access from the card
-            state->cards[cardIndex].hasAccess = 0;
-            break;
-        default:
-            // Error message if invalid choice
-            printf("Invalid choice.\n");
-            break;
-    }
+    state->cards[cardIndex].hasAccess = choice;
 }
 
 void addNewCard(struct SystemState* state, char* cardNum, int choice) {
