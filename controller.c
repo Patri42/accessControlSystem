@@ -35,19 +35,51 @@ int loadCardData(struct SystemState* state) {
         return 1;
     }
 
-    char cardNum[CARD_NUM_LEN];
-    int hasAccess;
-    time_t added;
-    while (fscanf(fp, "%s %d %lld", cardNum, &hasAccess, &added) == 3) {
+    // Initialize the number of cards to zero
+    state->numCards = 0;
+
+    // Read each line of the file and create a card for each one
+    char* line = NULL;
+    size_t len = 0;
+    ssize_t read;
+    while ((read = getline(&line, &len, fp)) != -1) {
+        // Parse the line into card data
+        char* token = strtok(line, " ");
+        if (token == NULL) {
+            printf("Error: could not parse card number from line '%s'.\n", line);
+            continue;
+        }
+        char* cardNum = (char*) malloc(strlen(token) + 1);
+        strcpy(cardNum, token);
+        int hasAccess;
+        if (sscanf(strtok(NULL, " "), "%d", &hasAccess) != 1) {
+            printf("Error: could not parse hasAccess from line '%s'.\n", line);
+            free(cardNum);
+            continue;
+        }
+        time_t added;
+        if (sscanf(strtok(NULL, " "), "%lld", &added) != 1) {
+            printf("Error: could not parse added timestamp from line '%s'.\n", line);
+            free(cardNum);
+            continue;
+        }
+
+        // Create a new card with the parsed data
         struct Card newCard;
-        strncpy(newCard.number, cardNum, CARD_NUM_LEN - 1);
-        newCard.number[CARD_NUM_LEN - 1] = '\0';
+        newCard.number = cardNum;
         newCard.hasAccess = hasAccess;
         newCard.added = added;
+
+        // Add the new card to the system state
+        state->cards = (struct Card*) realloc(state->cards, (state->numCards + 1) * sizeof(struct Card));
         state->cards[state->numCards] = newCard;
         state->numCards++;
     }
 
+    // Free the memory used by the line buffer
+    free(line);
+
+    // Close the file and return success
     fclose(fp);
     return 0;
 }
@@ -136,37 +168,13 @@ void updateCardAccess(struct SystemState* state, int cardIndex, int choice) {
     state->cards[cardIndex].hasAccess = choice;
 }
 
-void addNewCard(struct SystemState* state, char* cardNum, int choice) {
-    // Check if there is already a card with the same number
-    for (int cardIndex = 0; cardIndex < state->numCards; cardIndex++) {
-        if (strcmp(state->cards[cardIndex].number, cardNum) == 0) {
-            state->cards[cardIndex].hasAccess = choice == 1 ? 1 : 0;
-            state->cards[cardIndex].added = time(NULL);
-            // Open the card data file for writing
-            FILE* fp = fopen(state->cardDataFile, "w");
-            if (fp == NULL) {
-                printf("Error: could not open file %s for writing.\n", state->cardDataFile);
-                return;
-            }
-            // Write all card data to the file
-            for (int i = 0; i < state->numCards; i++) {
-                fprintf(fp, "%s %d %lld\n", state->cards[i].number, state->cards[i].hasAccess, state->cards[i].added);
-            }
-            fclose(fp);
-            return;
-        }
-    }
-
+void addNewCard(struct SystemState* state, const char* cardNum, int choice) {
     // Create a new card struct
     struct Card newCard;
-    strncpy(newCard.number, cardNum, CARD_NUM_LEN - 1);
-    newCard.number[CARD_NUM_LEN - 1] = '\0';
+    strncpy(newCard.number, cardNum, sizeof(newCard.number) - 1);
+    newCard.number[sizeof(newCard.number) - 1] = '\0';
     newCard.hasAccess = choice == 1 ? 1 : 0;
     newCard.added = time(NULL);
-
-    // Add the new card to the end of the cards array
-    state->cards[state->numCards] = newCard;
-    state->numCards++;
 
     // Open the card data file for appending
     FILE* fp = fopen(state->cardDataFile, "a");
@@ -174,9 +182,26 @@ void addNewCard(struct SystemState* state, char* cardNum, int choice) {
         printf("Error: could not open file %s for writing.\n", state->cardDataFile);
         return;
     }
+
     // Write the new card data to the file
     fprintf(fp, "%s %d %lld\n", newCard.number, newCard.hasAccess, newCard.added);
+
+    // Close the file
     fclose(fp);
+
+    // Increase the number of cards in the system
+    state->numCards++;
+
+    // Reallocate memory for the new card
+    state->cards = realloc(state->cards, state->numCards * sizeof(struct Card));
+    if (state->cards == NULL) {
+        printf("Error: memory allocation failed.\n");
+        state->numCards = 0;
+        return;
+    }
+
+    // Add the new card to the end of the cards array
+    state->cards[state->numCards - 1] = newCard;
 }
 
 char* getCardNumber() {
