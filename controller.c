@@ -137,7 +137,7 @@ void updateCardAccess(struct SystemState* state, int cardIndex, int choice) {
 }
 
 void addNewCard(struct SystemState* state, char* cardNum, int choice) {
-    // Creat a new card struct
+    // Create a new card struct
     struct Card newCard;
     strncpy(newCard.number, cardNum, CARD_NUM_LEN - 1);
     newCard.number[CARD_NUM_LEN - 1] = '\0';
@@ -160,16 +160,12 @@ void addNewCard(struct SystemState* state, char* cardNum, int choice) {
     // Increase the number of cards in the system and resize the cards array
     state->numCards++;
     // Allocate memory for the new cards array
-    struct Card* newCards = malloc(state->numCards * sizeof(struct Card));
-
-    // Copy the existing cards to the new array
-    memcpy(newCards, state->cards, (state->numCards - 1) * sizeof(struct Card));
+    struct Card* newCards = realloc(state->cards, state->numCards * sizeof(struct Card));
 
     // Add the new card to the end of the new cards array
     newCards[state->numCards - 1] = newCard;
 
-    // Free the old cards array and update the state
-    free(state->cards);
+    // Update the state to use the new cards array
     state->cards = newCards;
 }
 
