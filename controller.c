@@ -28,24 +28,27 @@ void processUserChoice(int choice, struct SystemState* state);
 
 
 // Open the card data file for reading
-int loadCardData(struct SystemState* state){
+int loadCardData(struct SystemState* state) {
     FILE* fp = fopen(state->cardDataFile, "r");
-        if (fp != NULL) {
-            char line[100];
-            while (fgets(line, sizeof(line), fp) != NULL) {
-                char number[CARD_NUM_LEN];
-                int hasAccess;
-                time_t added;
-                if (sscanf(line, "%s %d %lld", number, &hasAccess, &added) != 3) {
-                    printf("Error: invalid line in card data file.\n");
-                    fclose(fp);
-                    free(state->cards);
-                    return 1;
-                }
-                addNewCard(state, number, hasAccess ? 1 : 2);
-            }
-            fclose(fp);
-        }
+    if (fp == NULL) {
+        printf("Error: could not open file %s for reading.\n", state->cardDataFile);
+        return 1;
+    }
+
+    char cardNum[CARD_NUM_LEN];
+    int hasAccess;
+    time_t added;
+    while (fscanf(fp, "%s %d %lld", cardNum, &hasAccess, &added) == 3) {
+        struct Card newCard;
+        strncpy(newCard.number, cardNum, CARD_NUM_LEN - 1);
+        newCard.number[CARD_NUM_LEN - 1] = '\0';
+        newCard.hasAccess = hasAccess;
+        newCard.added = added;
+        state->cards[state->numCards] = newCard;
+        state->numCards++;
+    }
+
+    fclose(fp);
     return 0;
 }
 
