@@ -137,6 +137,26 @@ void updateCardAccess(struct SystemState* state, int cardIndex, int choice) {
 }
 
 void addNewCard(struct SystemState* state, char* cardNum, int choice) {
+    // Check if there is already a card with the same number
+    for (int cardIndex = 0; cardIndex < state->numCards; cardIndex++) {
+        if (strcmp(state->cards[cardIndex].number, cardNum) == 0) {
+            state->cards[cardIndex].hasAccess = choice == 1 ? 1 : 0;
+            state->cards[cardIndex].added = time(NULL);
+            // Open the card data file for writing
+            FILE* fp = fopen(state->cardDataFile, "w");
+            if (fp == NULL) {
+                printf("Error: could not open file %s for writing.\n", state->cardDataFile);
+                return;
+            }
+            // Write all card data to the file
+            for (int i = 0; i < state->numCards; i++) {
+                fprintf(fp, "%s %d %lld\n", state->cards[i].number, state->cards[i].hasAccess, state->cards[i].added);
+            }
+            fclose(fp);
+            return;
+        }
+    }
+
     // Create a new card struct
     struct Card newCard;
     strncpy(newCard.number, cardNum, CARD_NUM_LEN - 1);
@@ -144,29 +164,19 @@ void addNewCard(struct SystemState* state, char* cardNum, int choice) {
     newCard.hasAccess = choice == 1 ? 1 : 0;
     newCard.added = time(NULL);
 
+    // Add the new card to the end of the cards array
+    state->cards[state->numCards] = newCard;
+    state->numCards++;
+
     // Open the card data file for appending
     FILE* fp = fopen(state->cardDataFile, "a");
     if (fp == NULL) {
         printf("Error: could not open file %s for writing.\n", state->cardDataFile);
         return;
     }
-
     // Write the new card data to the file
     fprintf(fp, "%s %d %lld\n", newCard.number, newCard.hasAccess, newCard.added);
-
-    // Close the file
     fclose(fp);
-
-    // Increase the number of cards in the system and resize the cards array
-    state->numCards++;
-    // Allocate memory for the new cards array
-    struct Card* newCards = realloc(state->cards, state->numCards * sizeof(struct Card));
-
-    // Add the new card to the end of the new cards array
-    newCards[state->numCards - 1] = newCard;
-
-    // Update the state to use the new cards array
-    state->cards = newCards;
 }
 
 char* getCardNumber() {

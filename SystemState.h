@@ -18,6 +18,12 @@ struct Card {
     time_t added;
 };
 
+// Define a struct for a card node
+struct CardNode {
+    struct Card card;
+    struct CardNode* next;
+};
+
 // Define a struct for the system state
 struct SystemState {
     struct Card* cards;
