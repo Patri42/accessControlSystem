@@ -17,11 +17,12 @@ void printLampStatus(bool isGreen);
 void remoteOpenDoor(struct SystemState* state);
 int getChoice();
 void updateCardAccess(struct SystemState* state, int cardIndex, int choice);
-void addNewCard(struct SystemState* state, char* cardNum, int choice);
-char* getCardNumber();
+void addNewCard(struct SystemState* state, const char* cardNum, int choice);
+char *getCardNumber(FILE *fp);
 void addRemoveAccess(struct SystemState* state);
 void fakeCardScan(struct SystemState* state);
 void listAllCards(struct SystemState* state);
+void addCardNode(struct SystemState* state, struct Card card);
 int loadCardData(struct SystemState* state);
 int getUserChoice();
 void processUserChoice(int choice, struct SystemState* state);
@@ -35,53 +36,33 @@ int loadCardData(struct SystemState* state) {
         return 1;
     }
 
-    // Initialize the number of cards to zero
-    state->numCards = 0;
-
-    // Read each line of the file and create a card for each one
-    char* line = NULL;
-    size_t len = 0;
-    ssize_t read;
-    while ((read = getline(&line, &len, fp)) != -1) {
-        // Parse the line into card data
-        char* token = strtok(line, " ");
-        if (token == NULL) {
-            printf("Error: could not parse card number from line '%s'.\n", line);
-            continue;
+    char line[100];
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        struct Card card;
+        char tempNumber[100]; // Use a temporary buffer to read the card number
+        if (sscanf(line, "%s %d %lld", tempNumber, &card.hasAccess, &card.added) != 3) {
+            printf("Error: invalid line in card data file.\n");
+            fclose(fp);
+            return 1;
         }
-        char* cardNum = (char*) malloc(strlen(token) + 1);
-        strcpy(cardNum, token);
-        int hasAccess;
-        if (sscanf(strtok(NULL, " "), "%d", &hasAccess) != 1) {
-            printf("Error: could not parse hasAccess from line '%s'.\n", line);
-            free(cardNum);
-            continue;
-        }
-        time_t added;
-        if (sscanf(strtok(NULL, " "), "%lld", &added) != 1) {
-            printf("Error: could not parse added timestamp from line '%s'.\n", line);
-            free(cardNum);
-            continue;
-        }
-
-        // Create a new card with the parsed data
-        struct Card newCard;
-        newCard.number = cardNum;
-        newCard.hasAccess = hasAccess;
-        newCard.added = added;
-
-        // Add the new card to the system state
-        state->cards = (struct Card*) realloc(state->cards, (state->numCards + 1) * sizeof(struct Card));
-        state->cards[state->numCards] = newCard;
-        state->numCards++;
+        // Allocate memory based on the length of the card number read from the file
+        card.number = (char*) malloc(sizeof(char) * (strlen(tempNumber) + 1));
+        strcpy(card.number, tempNumber);
+        addCardNode(state, card);
     }
 
-    // Free the memory used by the line buffer
-    free(line);
-
-    // Close the file and return success
     fclose(fp);
     return 0;
+}
+void freeCardList(struct SystemState* state) {
+    struct CardNode* currentNode = state->cardHead;
+    while (currentNode != NULL) {
+        struct CardNode* temp = currentNode;
+        currentNode = currentNode->next;
+        free(temp->card.number);
+        free(temp);
+    }
+    state->cardHead = NULL;
 }
 
 // Waits for user to press Enter
@@ -111,43 +92,41 @@ void remoteOpenDoor(struct SystemState* state) {
     printLampStatus(0);
 }
 
-void listAllCards(struct SystemState* state){
-    // Open the card data file for reading
-    FILE* fp = fopen(state->cardDataFile, "r");
-    if (fp == NULL) {
-        printf("Error: could not open file %s for reading.\n", state->cardDataFile);
-        return;
-    }
-
-    // If no cards found
-    if (state ->numCards==0){
-        printf ("No cards stored.\n");
-        // Close the file
-        fclose(fp);
+void listAllCards(struct SystemState* state) {
+    if (state->numCards == 0) {
+        printf("No cards stored.\n");
         return;
     }
 
     printf("All cards in system:\n");
-    // Read the card data from the file and print it to the console
-    char line [100];
-    while (fgets(line, sizeof(line), fp) != NULL) {
-        char number[CARD_NUM_LEN];
-        int hasAccess;
-        time_t added;
-        if (sscanf(line, "%s %d %lld", number, &hasAccess, &added) != 3) {
-            printf("Error: invalid line in card data file.\n");
-            fclose(fp);
-            return;
-        }
-        printf("%s ", number);
-        if (hasAccess) {
+    struct CardNode* currentNode = state->cardHead;
+    while (currentNode != NULL) {
+        printf("%s ", currentNode->card.number);
+        if (currentNode->card.hasAccess) {
             printf("Access ");
         } else {
             printf("No access ");
         }
-        printf("Added to system: %s", ctime(&added));
+        printf("Added to system: %s", ctime(&currentNode->card.added));
+        currentNode = currentNode->next;
     }
-    fclose(fp);
+}
+
+void addCardNode(struct SystemState* state, struct Card card) {
+    struct CardNode* newNode = (struct CardNode*) malloc(sizeof(struct CardNode));
+    newNode->card = card;
+    newNode->next = NULL;
+
+    if (state->cardHead == NULL) {
+        state->cardHead = newNode;
+    } else {
+        struct CardNode* currentNode = state->cardHead;
+        while (currentNode->next != NULL) {
+            currentNode = currentNode->next;
+        }
+        currentNode->next = newNode;
+    }
+    state->numCards++;
 }
 
 int getChoice() {
@@ -163,16 +142,28 @@ int getChoice() {
     }
     return choice;
 }
+
+
 // Updates the access level of a card in the system state.
 void updateCardAccess(struct SystemState* state, int cardIndex, int choice) {
-    state->cards[cardIndex].hasAccess = choice;
+    struct CardNode* currentNode = state->cardHead;
+    int index = 0;
+
+    while (currentNode != NULL) {
+        if (index == cardIndex) {
+            currentNode->card.hasAccess = choice;
+            break;
+        }
+        index++;
+        currentNode = currentNode->next;
+    }
 }
 
 void addNewCard(struct SystemState* state, const char* cardNum, int choice) {
     // Create a new card struct
     struct Card newCard;
-    strncpy(newCard.number, cardNum, sizeof(newCard.number) - 1);
-    newCard.number[sizeof(newCard.number) - 1] = '\0';
+    newCard.number = (char*) malloc(sizeof(char) * (strlen(cardNum) + 1));
+    strcpy(newCard.number, cardNum);
     newCard.hasAccess = choice == 1 ? 1 : 0;
     newCard.added = time(NULL);
 
@@ -186,42 +177,40 @@ void addNewCard(struct SystemState* state, const char* cardNum, int choice) {
     // Write the new card data to the file
     fprintf(fp, "%s %d %lld\n", newCard.number, newCard.hasAccess, newCard.added);
 
-    // Close the file
     fclose(fp);
 
     // Increase the number of cards in the system
     state->numCards++;
 
-    // Reallocate memory for the new card
-    state->cards = realloc(state->cards, state->numCards * sizeof(struct Card));
-    if (state->cards == NULL) {
-        printf("Error: memory allocation failed.\n");
-        state->numCards = 0;
-        return;
-    }
-
-    // Add the new card to the end of the cards array
-    state->cards[state->numCards - 1] = newCard;
+    // Add the new card to the linked list using the addCardNode function
+    addCardNode(state, newCard);
 }
 
-char* getCardNumber() {
+char* getCardNumber(FILE* fp) {
     // Allocate memory for the card number
-    char* cardNum = malloc(CARD_NUM_LEN * sizeof(char));
-    fgets(cardNum, CARD_NUM_LEN, stdin);
-    cardNum[strcspn(cardNum, "\n")] = '\0';
+    char tempNumber[100]; // Use a temporary buffer to read the card number
+    if (fscanf(fp, "%s", tempNumber) == EOF) {
+        return NULL; // Return NULL if the end of the file is reached
+    }
+    // Dynamic allocation
+    char* cardNum = malloc((strlen(tempNumber) + 1) * sizeof(char));
+    strcpy(cardNum, tempNumber);
+    
     return cardNum;
 }
 
 void addRemoveAccess(struct SystemState* state) {
     char* cardNum;
     printf("Enter Cardnumber: ");
-    cardNum = getCardNumber();
+    cardNum = getCardNumber(stdin);
 
     // Check if the card already exists in the system
-    for (int cardIndex = 0; cardIndex < state->numCards; cardIndex++) {
-        if (strcmp(state->cards[cardIndex].number, cardNum) == 0) {
+    struct CardNode* currentNode = state->cardHead;
+    int cardIndex = 0;
+    while (currentNode != NULL) {
+        if (strcmp(currentNode->card.number, cardNum) == 0) {
             // If the card exists, display its current access status
-            printf("This card has %s!\n", state->cards[cardIndex].hasAccess ? "access" : "no access");
+            printf("This card has %s!\n", currentNode->card.hasAccess ? "access" : "no access");
 
             printf("Press 1 for access, 2 for no access.\n");
             int choice = getChoice();
@@ -229,9 +218,11 @@ void addRemoveAccess(struct SystemState* state) {
                 updateCardAccess(state, cardIndex, choice);
             }
             // Free memory when done using it
-            free(cardNum); 
+            free(cardNum);
             return;
         }
+        currentNode = currentNode->next;
+        cardIndex++;
     }
 
     // If the card is not in the system, ask the user to add it
@@ -245,14 +236,13 @@ void addRemoveAccess(struct SystemState* state) {
 }
 
 // Simulates a card scan and checks if the scanned card has access
-void fakeCardScan(struct SystemState* state){
-   
+void fakeCardScan(struct SystemState* state) {
     char* cardNum;
-    
+
     printf("Please scan card to enter or X to go back to admin menu\n");
     printLampStatus(0);
-    
-    cardNum = getCardNumber();
+
+    cardNum = getCardNumber(stdin); // Dynamic allocation
 
     // Check if user wants to go back to admin menu
     if (strcmp(cardNum, "X") == 0 || strcmp(cardNum, "x") == 0) {
@@ -260,16 +250,19 @@ void fakeCardScan(struct SystemState* state){
         return;
     }
 
-    // Search for card in system
-    for (int cardIndex=0; cardIndex < state->numCards; cardIndex++){
-        if (strcmp(state->cards[cardIndex].number, cardNum)==0){
-            if (state->cards[cardIndex].hasAccess)
+    // Search for card in the system
+    struct CardNode* currentNode = state->cardHead;
+    while (currentNode != NULL) {
+        if (strcmp(currentNode->card.number, cardNum) == 0) {
+            if (currentNode->card.hasAccess) {
                 printLampStatus(1);
-            else
+            } else {
                 printLampStatus(0);
+            }
             free(cardNum);
             return;
         }
+        currentNode = currentNode->next;
     }
     printLampStatus(0);
     free(cardNum);

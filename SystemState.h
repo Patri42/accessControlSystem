@@ -23,7 +23,7 @@ struct CardNode {
 
 // Define a struct for the system state
 struct SystemState {
-    struct Card* cards;
+    struct CardNode* cardHead; // Pointer to the head of the linked list of cards
     int numCards;
     char* cardDataFile;
 };

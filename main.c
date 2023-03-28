@@ -6,12 +6,11 @@
 #include "controller.h"
 #include "SystemState.h"
 
-
 int main() {
 
     // Initialize the system state
     struct SystemState state;
-    state.cards = NULL;
+    state.cardHead = NULL; // Replace "state.cards" with "state.cardHead"
     state.numCards = 0;
     state.cardDataFile = "cards.txt";
 
@@ -27,6 +26,6 @@ int main() {
     } while (choice != 4);
 
     // Free memory and exit the program
-    free(state.cards);
+    //freeCardList(&state); // Call freeCardList instead of directly freeing state.cards
     return 0;
 }
