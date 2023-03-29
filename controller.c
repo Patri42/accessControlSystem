@@ -203,7 +203,8 @@ void addRemoveAccess(struct SystemState* state) {
     char* cardNum;
     printf("Enter Cardnumber: ");
     cardNum = getCardNumber(stdin);
-// Clear input buffer
+    
+    // Clear input buffer
     int c;
     while ((c = getchar()) != '\n' && c != EOF) {}
     // Check if the card already exists in the system
@@ -229,11 +230,20 @@ void addRemoveAccess(struct SystemState* state) {
 
     // If the card is not in the system, ask the user to add it
     printf("This card has no access!\n");
-    printf("Press 1 to add access, 2 to deny access.\n");
-    int choice = getChoice();
-    if (choice != -1) {
-        addNewCard(state, cardNum, choice);
+
+    int choice;
+    while (1) {
+        printf("Press 1 to add access, 2 to deny access.\n");
+        choice = getChoice();
+
+        if (choice == 1 || choice == 2) {
+            break;
+        } else {
+            printf("Invalid input. Please enter 1 or 2.\n");
+        }
     }
+
+    addNewCard(state, cardNum, choice);
     free(cardNum);
 }
 
