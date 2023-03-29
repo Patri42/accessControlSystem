@@ -11,7 +11,7 @@ void remoteOpenDoor(struct SystemState* state);
 int getChoice();
 void updateCardAccess(struct SystemState* state, int cardIndex, int choice);
 void addNewCard(struct SystemState* state, const char* cardNum, int choice);
-char* getCardNumber(FILE* fp) ;
+char* getCardNumber(FILE* file) ;
 void addRemoveAccess(struct SystemState* state);
 void fakeCardScan(struct SystemState* state);
 void listAllCards(struct SystemState* state);

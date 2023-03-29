@@ -12,19 +12,19 @@
 struct Card {
     char* number;
     int hasAccess;
-    time_t added;
+    time_t addedTime;
 };
 
 // Define a struct for a card node
 struct CardNode {
-    struct Card card;
+    struct Card cardInfo;
     struct CardNode* next;
 };
 
 // Define a struct for the system state
 struct SystemState {
     struct CardNode* cardHead; // Pointer to the head of the linked list of cards
-    int numCards;
+    int totalCards;
     char* cardDataFile;
 };
 
