@@ -203,7 +203,9 @@ void addRemoveAccess(struct SystemState* state) {
     char* cardNum;
     printf("Enter Cardnumber: ");
     cardNum = getCardNumber(stdin);
-
+// Clear input buffer
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) {}
     // Check if the card already exists in the system
     struct CardNode* currentNode = state->cardHead;
     int cardIndex = 0;
@@ -260,12 +262,14 @@ void fakeCardScan(struct SystemState* state) {
                 printLampStatus(0);
             }
             free(cardNum);
+            getchar();
             return;
         }
         currentNode = currentNode->next;
     }
     printLampStatus(0);
     free(cardNum);
+    getchar();
 }
 
 // Display menu and get user choice
