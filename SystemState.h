@@ -8,20 +8,23 @@
 #include <time.h> // Here because of Card struct
 
 
-// Define the maximum length of a card number
-#define CARD_NUM_LEN 20 
-
 // Define a struct for a card
 struct Card {
-    char number[CARD_NUM_LEN];
+    char* number;
     int hasAccess;
-    time_t added;
+    time_t addedTime;
+};
+
+// Define a struct for a card node
+struct CardNode {
+    struct Card cardInfo;
+    struct CardNode* next;
 };
 
 // Define a struct for the system state
 struct SystemState {
-    struct Card* cards;
-    int numCards;
+    struct CardNode* cardHead; // Pointer to the head of the linked list of cards
+    int totalCards;
     char* cardDataFile;
 };
 
